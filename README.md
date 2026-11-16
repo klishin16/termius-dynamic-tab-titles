@@ -1,0 +1,1 @@
+# termius-dynamic-tab-titles
