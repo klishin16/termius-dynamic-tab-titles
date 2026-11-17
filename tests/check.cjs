@@ -4,6 +4,20 @@ const assert = require('node:assert/strict');
 const dir = process.argv[2].replace(/\/$/, '') + '/';
 const ui = fs.readFileSync(dir + 'ui-process-4168589b.mjs', 'utf8');
 const shared = fs.readFileSync(dir + 'reconnectSaga-c10a1975.mjs', 'utf8');
+const mainProcess = fs.readFileSync(dir + 'main-process.mjs', 'utf8');
+const opened = [];
+const linkContext = vm.createContext({
+  Tn: () => ({platform: 'linux'}),
+  ce: {shell: {openExternal: url => {opened.push(url); return Promise.resolve();}}},
+  az: class { constructor() { throw Error('Web link opened in embedded browser'); } },
+});
+const handlerStart = mainProcess.indexOf('const TI=') + 'const TI='.length;
+const handlerEnd = mainProcess.indexOf(';function bje', handlerStart);
+const openLink = vm.runInContext('(' + mainProcess.slice(handlerStart, handlerEnd) + ')', linkContext);
+for (const url of ['https://example.com/path?x=1', 'http://localhost:3000', 'HTTPS://example.com']) {
+  openLink({url});
+  assert.equal(opened.at(-1), url);
+}
 const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(dir + 'helper.js', 'utf8'), context);
 const title = context.termiusDynamicTabTitle;

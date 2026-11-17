@@ -9,6 +9,7 @@ SUPPORTED_VERSION = "9.37.2"
 UI = 'ui-process/assets/ui-process-4168589b.js'
 SHARED = 'ui-process/assets/reconnectSaga-c10a1975.js'
 FISH = 'out/shell-integration/xdg_data/fish/vendor_conf.d/termius.fish'
+MAIN = 'main-process/main-process.js'
 
 HELPER = r'''function termiusDynamicTabTitle(title,terminals,editing){
 if(editing)return title;
@@ -70,6 +71,9 @@ def build(source: Path, target: Path, check_dir: Path | None = None):
     version = json.loads(read('package.json'))['version']
     if version != SUPPORTED_VERSION:
         raise RuntimeError(f'This patch is checked for 9.37.2, found {version}')
+    main_process = replace_once(read(MAIN).decode(),
+        'const TI=e=>Tn().platform==="linux"?new az(e):ce.shell.openExternal(e.url)',
+        'const TI=e=>Tn().platform==="linux"&&!/^https?:\\/\\//i.test(e.url)?new az(e):ce.shell.openExternal(e.url)')
     shared = read(SHARED).decode()
     shared = replace_once(shared,
         'mapTerminal=({terminal:er,multiplayerConnectionProcess:tr})=>({id:er.id,',
@@ -115,7 +119,7 @@ def build(source: Path, target: Path, check_dir: Path | None = None):
     fish = replace_once(fish,
         'builtin echo -n "$argv[1]" | command base64',
         'builtin printf "%s" "$argv[1]" | command base64 | string join ""')
-    replacements = {UI: ui.encode(), SHARED: shared.encode(), FISH: fish.encode()}
+    replacements = {UI: ui.encode(), SHARED: shared.encode(), FISH: fish.encode(), MAIN: main_process.encode()}
     payloads = []
     offset = 0
     for path, item in entries(header):
